@@ -8,7 +8,9 @@
 
  'use strict';
 
+var exec = require('child_process').exec;
  var path = require('path');
+
  module.exports = function(grunt) {
 
   // Please see the Grunt documentation for more information regarding task
@@ -18,7 +20,7 @@
     // Merge task-specific and/or target-specific options with these defaults.
 
     var options = this.options({
-      msdeployPath:"\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
+      msdeployPath: "\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
     });
     grunt.log.writeln();
     grunt.log.writeln();
@@ -47,28 +49,33 @@
         command += obj;
       }else{
         //level 2 is key value pair, loop through and attach
-        var i = 0;
+
         for (var prop in obj) {
           if(obj.hasOwnProperty(prop)){
-            var str = prop + "=\"" + obj[prop]+"\"";
+            var str = prop + "=\"" + obj[prop]+"\",";
             command += (str);
           }
         }
         //Remove last comma
-        str.substring(0, str.length - 1);
+        command = command.slice(0, -1);
       }
     }
-
-    command = path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe");
+    
     grunt.log.writeln(command);
+    grunt.log.writeln("Working...");
+
     var done = this.async();
-    grunt.util.spawn({
-      cmd:command
-    },function(error,result,code){
-      grunt.log.writeln(error);
-      grunt.log.writeln(result);
-      grunt.log.writeln(code);
-      done();
+    var child = exec(command, {maxBuffer:1000*1024},function (error, stdout, stderr) {
+        grunt.log.writeln(stdout);
+
+        if(!stderr && stderr !== ""){
+          grunt.fail.warn("stderr:\""+stderr+"\"",3);
+        }
+        if (error !== null) {
+          grunt.fail.warn(error,3);
+        }
+
+        done();
     });
   });
 
