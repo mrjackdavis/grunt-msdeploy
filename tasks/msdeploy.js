@@ -8,7 +8,7 @@
 
  'use strict';
 
-var exec = require('child_process').exec;
+ var exec = require('child_process').exec;
  var path = require('path');
 
  module.exports = function(grunt) {
@@ -60,23 +60,22 @@ var exec = require('child_process').exec;
         command = command.slice(0, -1);
       }
     }
-    
-    grunt.log.writeln(command);
+
+    //grunt.log.writeln(command);
     grunt.log.writeln("Working...");
 
     var done = this.async();
     var child = exec(command, {maxBuffer:1000*1024},function (error, stdout, stderr) {
-        grunt.log.writeln(stdout);
+      grunt.log.writeln(stdout);
 
-        if(!stderr && stderr !== ""){
-          grunt.fail.warn("stderr:\""+stderr+"\"",3);
-        }
-        if (error !== null) {
-          grunt.fail.warn(error,3);
-        }
+      if(!stderr && stderr !== ""){
+        grunt.fail.warn("stderr:\""+stderr+"\"",3);
+      }
+      if (error !== null) {
+        grunt.fail.warn(error,3);
+      }
 
-        done();
+      done();
     });
   });
-
 };
