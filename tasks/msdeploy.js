@@ -20,7 +20,8 @@
     // Merge task-specific and/or target-specific options with these defaults.
 
     var options = this.options({
-      msdeployPath: "\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
+      msdeployPath: getExePath()
+      //msdeployPath: "\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
     });
     grunt.log.writeln();
     grunt.log.writeln();
@@ -52,7 +53,7 @@
 
         for (var prop in obj) {
           if(obj.hasOwnProperty(prop)){
-            var str = prop + "=\"" + obj[prop]+"\",";
+            var str = prop + "=" + escapeShell(obj[prop])+",";
             command += (str);
           }
         }
@@ -61,7 +62,7 @@
       }
     }
 
-    //grunt.log.writeln(command);
+    grunt.log.debug(command);
     grunt.log.writeln("Working...");
 
     var done = this.async();
@@ -78,4 +79,12 @@
       done();
     });
   });
+
+  function getExePath() {
+    return escapeShell(path.resolve('node_modules/grunt-msdeploy/lib/msdeploy.exe'));
+  }
+
+  function escapeShell(cmd) {
+    return '"'+cmd+'"';
+  };
 };
