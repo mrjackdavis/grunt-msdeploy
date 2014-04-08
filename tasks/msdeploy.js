@@ -10,6 +10,7 @@
 
  var exec = require('child_process').exec;
  var path = require('path');
+ var fs = require('fs');
 
  module.exports = function(grunt) {
 
@@ -81,7 +82,20 @@
   });
 
   function getExePath() {
-    return escapeShell(path.resolve('node_modules/grunt-msdeploy/lib/msdeploy.exe'));
+
+    var relativeMsDeployPath = "IIS/Microsoft Web Deploy V3/msdeploy.exe";
+    var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
+    var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
+
+    if (fs.existsSync(msDeploy64Path)) {
+      return escapeShell(msDeploy64Path);
+    }
+
+    if (fs.existsSync(msDeploy32Path)) {
+      return escapeShell(msDeploy64Path);
+    }
+
+    throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
   }
 
   function escapeShell(cmd) {
