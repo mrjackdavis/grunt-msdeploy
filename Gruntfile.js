@@ -36,7 +36,10 @@ module.exports = function(grunt) {
       },
       custom_options: {
         options:{
-
+          args:{
+            verb:"sync",
+            allowUntrusted:"true"
+          }
         },
         src:"test/fixtures/myProject",
         dest:"tmp/MyProject2.zip"

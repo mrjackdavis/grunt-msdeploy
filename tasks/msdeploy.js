@@ -22,31 +22,30 @@
     // Merge task-specific and/or target-specific options with these defaults.
     var options = this.options({
       msdeployPath: getExePath(),
-      verb:"sync",
-      deployType:"package",
-      sourceType:"iisApp"
+      args:{
+        verb:"sync"
+      },
+      src:{
+        type:"iisApp",
+        args:{}
+      },
+      dest:{
+        type:"package",
+        args:{}
+      }
     });
 
     //Assertions
-    grunt.log.debug(this.filesSrc.length);
+    verifyLocationForType(this.filesSrc,options.src.type);
 
-    if(this.filesSrc.length>1){
-      grunt.log.warn('only support one src location');
-      return false;
-    }else if(this.filesSrc.length<1){
-      grunt.log.warn('must have at least one src location');
-      return false;
-    }else if(!grunt.file.isDir(this.filesSrc[0])) {
-      grunt.log.warn('Source file "' + this.filesSrc[0] + '" is not directory.');
-      return false;
-    }
     var srcPath = this.filesSrc[0];
     if(!grunt.file.isPathAbsolute(srcPath))
       srcPath = path.resolve(srcPath)
+    
 
     //Make dir for dist if need be
-    var dest = this.files[0].dest
-    var destDir = dest.substr(0, Math.max(dest.lastIndexOf("/"),dest.lastIndexOf("\\")));
+    var destPath = this.files[0].dest
+    var destDir = destPath.substr(0, Math.max(destPath.lastIndexOf("/"),destPath.lastIndexOf("\\")));
     if(!grunt.file.isDir(destDir)) {
       grunt.file.mkdir(destDir);
       grunt.log.debug("Created directory \""+destDir+"\"")
@@ -57,9 +56,28 @@
 
     var args = [];
 
-    args.push("-verb:"+options.verb);
-    args.push("-source:"+options.sourceType+"="+srcPath);
-    args.push("-dest:"+options.deployType+"="+dest);
+    //Set args
+    for (var key in options.args){
+      var obj = options.args[key];
+      args.push("-"+key+":"+obj)
+    }
+
+    var srcArg = [];
+    srcArg.push("-source:"+options.src.type+"="+srcPath)
+    for (var key in options.src.args){
+      var obj = options.src.args[key];
+      args.push(key+"="+obj)
+    }
+
+    var destArg = []
+    destArg.push("-dest:"+options.dest.type+"="+destPath);
+    for (var key in options.dest.args){
+      var obj = options.dest.args[key];
+      args.push(key+"="+obj)
+    }
+
+    args.push(srcArg.join(","));
+    args.push(destArg.join(","));
 
     grunt.log.debug(options.msdeployPath);
     grunt.log.debug(args);
@@ -102,4 +120,23 @@ function getExePath() {
 
   throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
 }
+
+function verifyLocationForType(location,type){
+  switch(type){
+    case "iisApp":
+      if(location.length>1){
+        throw new Error('only support one src location for type iisApp');
+      }else if(location.length<1){
+        throw new Error('must have at least one src location for type iisApp');
+      }else if(!grunt.file.isDir(location[0])) {
+        throw new Error('Location "' + location[0] + '" for type iisApp must be a directory.');
+      }
+    break;
+    case "package":
+    break;
+    default:
+      throw new Error("Unknown deployment location type \""+type+"\"" );
+  }
+}
+
 };
