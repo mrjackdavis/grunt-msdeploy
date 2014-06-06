@@ -40,6 +40,9 @@
       grunt.log.warn('Source file "' + this.filesSrc[0] + '" is not directory.');
       return false;
     }
+    var srcPath = this.filesSrc[0];
+    if(!grunt.file.isPathAbsolute(srcPath))
+      srcPath = path.resolve(srcPath)
 
     //Make dir for dist if need be
     var dest = this.files[0].dest
@@ -55,7 +58,7 @@
     var args = [];
 
     args.push("-verb:"+options.verb);
-    args.push("-source:"+options.sourceType+"="+this.filesSrc[0]);
+    args.push("-source:"+options.sourceType+"="+srcPath);
     args.push("-dest:"+options.deployType+"="+dest);
 
     grunt.log.debug(options.msdeployPath);

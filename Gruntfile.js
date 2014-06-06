@@ -31,20 +31,15 @@ module.exports = function(grunt) {
     // Configuration to be run (and then tested).
     msdeploy: {
       default_options: {
-        options: {
-        },
-        files: {
-          'tmp/default_options': ['test/fixtures/testing', 'test/fixtures/123'],
-        },
+        src:"test/fixtures/myProject",
+        dest:"tmp/MyProject.zip"
       },
       custom_options: {
-        options: {
-          separator: ': ',
-          punctuation: ' !!!',
+        options:{
+
         },
-        files: {
-          'tmp/custom_options': ['test/fixtures/testing', 'test/fixtures/123'],
-        },
+        src:"test/fixtures/myProject",
+        dest:"tmp/MyProject2.zip"
       },
     },
 
