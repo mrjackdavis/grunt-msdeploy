@@ -1,7 +1,7 @@
 {
   "name": "grunt-msdeploy",
   "description": "The best msdeploy Grunt plugin ever.",
-  "version": "0.1.2",
+  "version": "0.2.0-beta",
   "homepage": "https://github.com/mrjackdavis/grunt-msdeploy",
   "author": {
     "name": "mrjackdavis",

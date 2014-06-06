@@ -85,6 +85,7 @@ msdeploy:{
 In lieu of a formal styleguide, take care to maintain the existing coding style. Add unit tests for any new or changed functionality. Lint and test your code using [Grunt](http://gruntjs.com/).
 
 ## Release History
+- 0.2.0-beta Enforce more control on tasks
 - 0.1.2 Use local msdeploy with more obvious exception
 - 0.1.1 Package msdeploy.exe to prevent dependency issues
 - 0.1.0 Initial release
