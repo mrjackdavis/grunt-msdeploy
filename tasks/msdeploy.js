@@ -36,24 +36,11 @@
     });
 
     //Assertions
-    verifyLocationForType(this.filesSrc,options.src.type);
-
-    var srcPath = this.filesSrc[0];
-    if(!grunt.file.isPathAbsolute(srcPath))
-      srcPath = path.resolve(srcPath)
-    
-
-    //Make dir for dist if need be
-    var destPath = this.files[0].dest
-    var destDir = destPath.substr(0, Math.max(destPath.lastIndexOf("/"),destPath.lastIndexOf("\\")));
-    if(!grunt.file.isDir(destDir)) {
-      grunt.file.mkdir(destDir);
-      grunt.log.debug("Created directory \""+destDir+"\"")
-    }
+    var srcPath = verifyLocationForType(this.filesSrc[0],options.src.type);
+    var destPath = verifyLocationForType(this.files[0].dest,options.dest.type);
 
     //Build args
     //Source
-
     var args = [];
 
     //Set args
@@ -63,24 +50,23 @@
     }
 
     var srcArg = [];
-    srcArg.push("-source:"+options.src.type+"="+srcPath)
+    srcArg.push("-source:"+options.src.type+"="+srcPath);
     for (var key in options.src.args){
       var obj = options.src.args[key];
-      args.push(key+"="+obj)
+      srcArg.push(key+"="+obj)
     }
+    args.push(srcArg.join(","));
 
     var destArg = []
     destArg.push("-dest:"+options.dest.type+"="+destPath);
     for (var key in options.dest.args){
       var obj = options.dest.args[key];
-      args.push(key+"="+obj)
+      destArg.push(key+"="+obj)
     }
-
-    args.push(srcArg.join(","));
     args.push(destArg.join(","));
 
     grunt.log.debug(options.msdeployPath);
-    grunt.log.debug(args);
+    grunt.log.debug(JSON.stringify(args));
 
 
     //Execute Process
@@ -124,16 +110,30 @@ function getExePath() {
 function verifyLocationForType(location,type){
   switch(type){
     case "iisApp":
-      if(location.length>1){
-        throw new Error('only support one src location for type iisApp');
-      }else if(location.length<1){
-        throw new Error('must have at least one src location for type iisApp');
-      }else if(!grunt.file.isDir(location[0])) {
-        throw new Error('Location "' + location[0] + '" for type iisApp must be a directory.');
-      }
-    break;
+      var srcPath = location;
+      if(!grunt.file.isPathAbsolute(srcPath))
+        srcPath = path.resolve(srcPath)
+      return srcPath;
+
     case "package":
-    break;
+      //Make dir for dist if need be
+      var location = location;
+      var destDir = location.substr(0, Math.max(location.lastIndexOf("/"),location.lastIndexOf("\\")));
+      if(!grunt.file.isDir(destDir)) {
+        grunt.file.mkdir(destDir);
+        grunt.log.debug("Created directory \""+destDir+"\"")
+      }
+
+      var locPath = location;
+      if(!grunt.file.isPathAbsolute(locPath))
+        locPath = path.resolve(locPath);
+      return locPath;
+
+    case "contentPath":
+      var locPath = location;
+      if(!grunt.file.isPathAbsolute(locPath))
+        locPath = path.resolve(locPath);
+      return locPath;
     default:
       throw new Error("Unknown deployment location type \""+type+"\"" );
   }
