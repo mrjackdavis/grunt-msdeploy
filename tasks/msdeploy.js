@@ -26,7 +26,7 @@
         verb:"sync"
       },
       src:{
-        type:"iisApp",
+        type:"contentPath",
         args:{}
       },
       dest:{
@@ -110,10 +110,7 @@ function getExePath() {
 function verifyLocationForType(location,type){
   switch(type){
     case "iisApp":
-      var srcPath = location;
-      if(!grunt.file.isPathAbsolute(srcPath))
-        srcPath = path.resolve(srcPath)
-      return srcPath;
+    return location;
 
     case "package":
       //Make dir for dist if need be
