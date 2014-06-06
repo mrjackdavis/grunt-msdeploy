@@ -8,11 +8,11 @@
 
  'use strict';
 
- var exec = require('child_process').exec;
- var path = require('path');
- var fs = require('fs');
+var spawn = require('child_process').spawn;
+var path = require('path');
+var fs = require('fs');
 
- module.exports = function(grunt) {
+module.exports = function(grunt) {
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
@@ -29,56 +29,58 @@
     grunt.log.writeln(this.target);
     grunt.log.writeln();
 
-    var command = "";
+    var args = [];
+    var command = options.msdeployPath;
 
-    //Build command
+    //Build args
     //Loop through,
     //Assume all level 1 are arguments: "-arg:"
     //Assume all level 2 is parameters, can be a string, or multiple key value pairs
 
-    command += options.msdeployPath;
     delete options["msdeployPath"];
 
     for (var key in options){
-      //append level 1 to command
-      command += " -"+key+":";
+      //append level 1 to args
+      var argument = "-"+key+":";
 
       var obj = options[key];
 
       //Check if level 2 is string
       if(typeof obj === 'string' || obj instanceof String){
-        //append string to command
-        command += obj;
+        //append string to args
+        argument += obj;
       }else{
         //level 2 is key value pair, loop through and attach
 
         for (var prop in obj) {
           if(obj.hasOwnProperty(prop)){
-            var str = prop + "=" + escapeShell(obj[prop])+",";
-            command += (str);
+            var str = prop + "=" + obj[prop]+",";
+            argument += (str);
           }
         }
         //Remove last comma
-        command = command.slice(0, -1);
+        argument = argument.slice(0, -1);
       }
+
+      //Add argument to args
+      args.push(argument);
     }
 
-    grunt.log.debug(command);
+    grunt.log.debug(args);
     grunt.log.writeln("Working...");
 
     var done = this.async();
-    var child = exec(command, {maxBuffer:1000*1024},function (error, stdout, stderr) {
-      grunt.log.writeln(stdout);
 
-      if(!stderr && stderr !== ""){
-        grunt.fail.warn("stderr:\""+stderr+"\"",3);
-      }
-      if (error !== null) {
-        grunt.fail.warn(error,3);
-      }
+    var process = spawn(command,args);
 
-      done();
-    });
+    process.stdout.on('data', function(data) { grunt.log.write(data) });
+    process.stderr.on('data', function(data) { grunt.log.error(data); });
+    process.on('exit', function(code) {
+            if (code !== 0) {
+                grunt.fail.warn('Something went wrong');
+            }
+            done();
+        });
   });
 
   function getExePath() {
@@ -88,11 +90,11 @@
     var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
 
     if (fs.existsSync(msDeploy64Path)) {
-      return escapeShell(msDeploy64Path);
+      return msDeploy64Path;
     }
 
     if (fs.existsSync(msDeploy32Path)) {
-      return escapeShell(msDeploy64Path);
+      return msDeploy64Path;
     }
 
     throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
