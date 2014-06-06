@@ -8,99 +8,95 @@
 
  'use strict';
 
-var spawn = require('child_process').spawn;
-var path = require('path');
-var fs = require('fs');
+ var spawn = require('child_process').spawn;
+ var path = require('path');
+ var fs = require('fs');
 
-module.exports = function(grunt) {
+ module.exports = function(grunt) {
 
   // Please see the Grunt documentation for more information regarding task
   // creation: http://gruntjs.com/creating-tasks
 
   grunt.registerMultiTask('msdeploy', 'The best msdeploy Grunt plugin ever.', function() {
+
     // Merge task-specific and/or target-specific options with these defaults.
-
     var options = this.options({
-      msdeployPath: getExePath()
-      //msdeployPath: "\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
+      msdeployPath: getExePath(),
+      verb:"sync",
+      deployType:"package",
+      sourceType:"iisApp"
     });
-    grunt.log.writeln();
-    grunt.log.writeln();
-    grunt.log.writeln(this.target);
-    grunt.log.writeln();
 
-    var args = [];
-    var command = options.msdeployPath;
+    //Assertions
+    grunt.log.debug(this.filesSrc.length);
+
+    if(this.filesSrc.length>1){
+      grunt.log.warn('only support one src location');
+      return false;
+    }else if(this.filesSrc.length<1){
+      grunt.log.warn('must have at least one src location');
+      return false;
+    }else if(!grunt.file.isDir(this.filesSrc[0])) {
+      grunt.log.warn('Source file "' + this.filesSrc[0] + '" is not directory.');
+      return false;
+    }
+
+    //Make dir for dist if need be
+    var dest = this.files[0].dest
+    var destDir = dest.substr(0, Math.max(dest.lastIndexOf("/"),dest.lastIndexOf("\\")));
+    if(!grunt.file.isDir(destDir)) {
+      grunt.file.mkdir(destDir);
+      grunt.log.debug("Created directory \""+destDir+"\"")
+    }
 
     //Build args
-    //Loop through,
-    //Assume all level 1 are arguments: "-arg:"
-    //Assume all level 2 is parameters, can be a string, or multiple key value pairs
+    //Source
 
-    delete options["msdeployPath"];
+    var args = [];
 
-    for (var key in options){
-      //append level 1 to args
-      var argument = "-"+key+":";
+    args.push("-verb:"+options.verb);
+    args.push("-source:"+options.sourceType+"="+this.filesSrc[0]);
+    args.push("-dest:"+options.deployType+"="+dest);
 
-      var obj = options[key];
-
-      //Check if level 2 is string
-      if(typeof obj === 'string' || obj instanceof String){
-        //append string to args
-        argument += obj;
-      }else{
-        //level 2 is key value pair, loop through and attach
-
-        for (var prop in obj) {
-          if(obj.hasOwnProperty(prop)){
-            var str = prop + "=" + obj[prop]+",";
-            argument += (str);
-          }
-        }
-        //Remove last comma
-        argument = argument.slice(0, -1);
-      }
-
-      //Add argument to args
-      args.push(argument);
-    }
-
+    grunt.log.debug(options.msdeployPath);
     grunt.log.debug(args);
-    grunt.log.writeln("Working...");
 
+
+    //Execute Process
     var done = this.async();
 
-    var process = spawn(command,args);
+    var process = spawn(options.msdeployPath,args);
 
-    process.stdout.on('data', function(data) { grunt.log.write(data) });
-    process.stderr.on('data', function(data) { grunt.log.error(data); });
+    process.stdout.on('data', function(data) { 
+        grunt.log.write(data);
+    });
+    process.stderr.on('data', function(data) {
+      grunt.log.error(data);
+    });
     process.on('exit', function(code) {
-            if (code !== 0) {
-                grunt.fail.warn('Something went wrong');
-            }
-            done();
-        });
+      if (code !== 0) {
+        grunt.fail.warn('Something went wrong');
+      }else{
+        grunt.log.ok("Deploy succeeded !");
+      }
+      done();
+    });
   });
 
-  function getExePath() {
+function getExePath() {
 
-    var relativeMsDeployPath = "IIS/Microsoft Web Deploy V3/msdeploy.exe";
-    var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
-    var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
+  var relativeMsDeployPath = "IIS/Microsoft Web Deploy V3/msdeploy.exe";
+  var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
+  var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
 
-    if (fs.existsSync(msDeploy64Path)) {
-      return msDeploy64Path;
-    }
-
-    if (fs.existsSync(msDeploy32Path)) {
-      return msDeploy64Path;
-    }
-
-    throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
+  if (fs.existsSync(msDeploy64Path)) {
+    return msDeploy64Path;
   }
 
-  function escapeShell(cmd) {
-    return '"'+cmd+'"';
-  };
+  if (fs.existsSync(msDeploy32Path)) {
+    return msDeploy64Path;
+  }
+
+  throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
+}
 };
