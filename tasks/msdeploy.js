@@ -86,15 +86,24 @@ module.exports = function(grunt) {
   function getExePath() {
 
     var relativeMsDeployPath = "IIS/Microsoft Web Deploy V3/msdeploy.exe";
-    var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
-    var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
 
-    if (fs.existsSync(msDeploy64Path)) {
-      return msDeploy64Path;
+    var path64 = process.env.ProgramFiles,relativeMsDeployPath;
+    var path32 = process.env["ProgramFiles(x86)"],relativeMsDeployPath;
+
+    if (path64 != null) {
+      var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
+      if (fs.existsSync(msDeploy64Path)) {
+        grunt.log.writeln("Found 64-bit version of msdeploy");
+        return msDeploy64Path;
+      }
     }
 
-    if (fs.existsSync(msDeploy32Path)) {
-      return msDeploy64Path;
+    if (path32 != null) {
+      var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
+      if (fs.existsSync(msDeploy32Path)) {
+        grunt.log.writeln("Found 32-bit version of msdeploy");
+        return msDeploy64Path;
+      }
     }
 
     throw new Error("MSDeploy doesn't seem to be installed. Could not find msdeploy in \""+msDeploy64Path+"\" or \""+msDeploy32Path+"\". You can install it from http://www.iis.net/downloads/microsoft/web-deploy")
