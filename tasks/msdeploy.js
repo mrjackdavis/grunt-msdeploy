@@ -87,10 +87,10 @@ module.exports = function(grunt) {
 
     var relativeMsDeployPath = "IIS/Microsoft Web Deploy V3/msdeploy.exe";
 
-    var path64 = process.env.ProgramFiles,relativeMsDeployPath;
-    var path32 = process.env["ProgramFiles(x86)"],relativeMsDeployPath;
+    var path64 = process.env.ProgramFiles;
+    var path32 = process.env["ProgramFiles(x86)"];
 
-    if (path64 != null) {
+    if (path64) {
       var msDeploy64Path = path.resolve(path.join(process.env.ProgramFiles,relativeMsDeployPath));
       if (fs.existsSync(msDeploy64Path)) {
         grunt.log.writeln("Found 64-bit version of msdeploy");
@@ -98,11 +98,11 @@ module.exports = function(grunt) {
       }
     }
 
-    if (path32 != null) {
+    if (path32) {
       var msDeploy32Path = path.resolve(path.join(process.env["ProgramFiles(x86)"],relativeMsDeployPath));
       if (fs.existsSync(msDeploy32Path)) {
         grunt.log.writeln("Found 32-bit version of msdeploy");
-        return msDeploy64Path;
+        return msDeploy32Path;
       }
     }
 
