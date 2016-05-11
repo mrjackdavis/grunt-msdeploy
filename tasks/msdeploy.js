@@ -43,6 +43,10 @@ module.exports = function(grunt) {
       //append level 1 to args
       var argument = "-"+key+":";
 
+      //Check if key is a skip, skip2, skipN and create a skip argument
+      if (key.substr(0,4) === 'skip')
+        argument = "-skip:";
+
       var obj = options[key];
 
       //Check if level 2 is string
