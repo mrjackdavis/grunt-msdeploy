@@ -12,7 +12,7 @@ var spawn = require('child_process').spawn;
 var path = require('path');
 var fs = require('fs');
 var iis = require('vsts-iis');
-const util = require('util');
+//var util = require('util');
 
 module.exports = function(grunt) {
 
