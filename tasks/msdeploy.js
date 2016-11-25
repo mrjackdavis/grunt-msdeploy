@@ -11,6 +11,8 @@
 var spawn = require('child_process').spawn;
 var path = require('path');
 var fs = require('fs');
+var iis = require('vsts-iis');
+//var util = require('util');
 
 module.exports = function(grunt) {
 
@@ -19,7 +21,7 @@ module.exports = function(grunt) {
 
   grunt.registerMultiTask('msdeploy', 'The best msdeploy Grunt plugin ever.', function() {
     // Merge task-specific and/or target-specific options with these defaults.
-
+    //grunt.log.write(util.inspect(this, {showHidden: false, depth: null}));
     var options = this.options({
       msdeployPath: getExePath()
       //msdeployPath: "\""+path.resolve("/Program Files (x86)/IIS/Microsoft Web Deploy V3/msdeploy.exe")+"\""
@@ -42,6 +44,10 @@ module.exports = function(grunt) {
     for (var key in options){
       //append level 1 to args
       var argument = "-"+key+":";
+
+      //Check if key is a skip, skip2, skipN and create a skip argument
+      if (key.substr(0,4) === 'skip')
+        argument = "-skip:";
 
       var obj = options[key];
 
@@ -70,18 +76,57 @@ module.exports = function(grunt) {
     grunt.log.writeln("Working...");
 
     var done = this.async();
+    var iisConfig = this.data.iis;
 
+    if (iisConfig) {
+
+      var iisServer = new iis.PsExec(iisConfig.server);
+
+      iisServer.Sites.exists(iisConfig.site.domain).then(function(exists){
+        if (!exists) {
+            grunt.log.writeln("Site not exist. Creating Site.");
+            grunt.log.writeln("Creating AppPool.");
+
+            iisServer.AppPools.add(iisConfig.site.domain).then(function(){
+              grunt.log.writeln("AppPool Created");
+              iisServer.Sites.add({
+                name: iisConfig.site.domain,
+                protocol: 'http',
+                port: 80,
+                host: iisConfig.site.domain,
+                path : iisConfig.site.path
+              }).then(function(result) {
+                grunt.log.writeln("Site added!");
+                iisServer.Sites.setAppPool(iisConfig.site.domain, iisConfig.site.domain).then(function(){
+                  grunt.log.writeln("Seted AppPool to Site");
+                  deploy(command, args, done);
+                });
+              });
+            })
+
+          } else {
+            grunt.log.writeln("Site alredy exist. Deploying.");
+            deploy(command, args, done);
+          }
+      });
+    } else {
+      deploy(command, args, done);
+    }
+  });
+
+
+  function deploy(command, args, done) {
     var process = spawn(command,args);
 
     process.stdout.on('data', function(data) { grunt.log.write(data) });
     process.stderr.on('data', function(data) { grunt.log.error(data); });
     process.on('exit', function(code) {
-            if (code !== 0) {
-                grunt.fail.warn('Something went wrong');
-            }
-            done();
-        });
-  });
+        if (code !== 0) {
+            grunt.fail.warn('Something went wrong');
+        }
+        done();
+    });
+  };
 
   function getExePath() {
 
